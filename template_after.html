@@ -1,7 +1,7 @@
 ;
-function switchTab(n,b){document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+n).classList.add('active');b.classList.add('active');}
-function heatBg(v,m){if(!v)return '#f8fafc';var t=Math.min(v/m,1);return 'rgb('+Math.round(219-t*189)+','+Math.round(234-t*170)+','+Math.round(254-t*79)+')';}
-function heatFg(v,m){return(!v||v/m<0.45)?'#1d4ed8':'#fff';}
+function switchTab(n,b){document.querySelectorAll('.tab-panel').forEach(function(p){p.classList.remove('active');});document.querySelectorAll('.nav-btn').forEach(function(x){x.classList.remove('active');});document.getElementById('tab-'+n).classList.add('active');b.classList.add('active');if(n==='openissues'&&!window._oiRendered){renderOpenIssues();window._oiRendered=true;}}
+function heatBg(v,m){if(!v)return '#f8fafc';var t=Math.min(v/m,1);return 'rgb('+Math.round(219-t*216)+','+Math.round(234-t*131)+','+Math.round(254-t*37)+')';}
+function heatFg(v,m){return(!v||v/m<0.45)?'#0367D9':'#fff';}
 var BASE={responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},padding:14}}},scales:{x:{grid:{display:false},ticks:{font:{size:11}}},y:{grid:{color:'#f1f5f9'},ticks:{font:{size:11}},beginAtZero:true}}};
 document.getElementById('meta-bar').textContent='Generated '+D.generated+' | '+D.file_count+' reports | '+D.total_events.toLocaleString()+' total gap events';
 if(D.display_weeks.length)document.getElementById('date-range').textContent=D.display_weeks[0]+' - '+D.display_weeks[D.display_weeks.length-1];
@@ -12,57 +12,17 @@ function delta(c,p,bad){if(p==null)return '';var d=c-p;if(d===0)return '<div cla
 function renderAllKpis(){var whsNow=D.warehouses.filter(function(w){return((D.whs_weekly[w]&&D.whs_weekly[w][lw])||0)>0;}).length;var whsPrev=pw?D.warehouses.filter(function(w){return((D.whs_weekly[w]&&D.whs_weekly[w][pw])||0)>0;}).length:null;var nvc=D.new_vs_co[lw],coRate=(nvc.new+nvc.carryover)>0?Math.round(nvc.carryover/(nvc.new+nvc.carryover)*100):0;document.getElementById('kpi-cards').innerHTML='<div class="kpi-card blue"><div class="kpi-label">Total Gap Events (latest week)</div><div class="kpi-value">'+lwD.total.toLocaleString()+'</div>'+delta(lwD.total,pwD?pwD.total:null,true)+'</div>'+'<div class="kpi-card amber"><div class="kpi-label">Unique Dockets with Gaps</div><div class="kpi-value">'+lwD.unique_dockets.toLocaleString()+'</div>'+delta(lwD.unique_dockets,pwD?pwD.unique_dockets:null,true)+'</div>'+'<div class="kpi-card green"><div class="kpi-label">Warehouses Affected</div><div class="kpi-value">'+whsNow+'</div>'+delta(whsNow,whsPrev,true)+'</div>'+'<div class="kpi-card purple"><div class="kpi-label">Carried-Over Rate (latest week)</div><div class="kpi-value">'+coRate+'%</div><div class="kpi-delta delta-neutral">'+nvc.carryover+' recurring / '+nvc.new+' new</div></div>';}
 renderAllKpis();
 
-// Rules-change annotation plugin (draws dashed vertical lines on trend chart)
-var rulesChangePlugin={id:'rulesChange',afterDraw:function(chart){
-  if(!D.exceptions||!D.exceptions.length)return;
-  var ctx=chart.ctx,xScale=chart.scales.x,yScale=chart.scales.y;
-  var seen={};
-  D.exceptions.forEach(function(ex){
-    if(seen[ex.effective_date])return; seen[ex.effective_date]=true;
-    var idx=-1;
-    for(var i=0;i<D.weeks.length;i++){if(D.weeks[i]>=ex.effective_date){idx=i;break;}}
-    if(idx<0)return;
-    var x=xScale.getPixelForValue(idx);
-    ctx.save();
-    ctx.setLineDash([5,4]);
-    ctx.strokeStyle='rgba(100,116,139,0.65)';
-    ctx.lineWidth=1.5;
-    ctx.beginPath();ctx.moveTo(x,yScale.top);ctx.lineTo(x,yScale.bottom);ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle='rgba(100,116,139,0.85)';
-    ctx.font='bold 10px sans-serif';
-    ctx.fillText('BI rule change',x+4,yScale.top+13);
-    ctx.restore();
-  });
-}};
-var trendChart=new Chart(document.getElementById('trendChart'),{plugins:[rulesChangePlugin],type:'line',data:{labels:D.display_weeks,datasets:[
-  {label:'Orders',  data:D.weeks.map(function(w){return D.weekly[w].Orders;}),  borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.07)',fill:true,tension:.35,pointRadius:4},
+var trendChart=new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:D.display_weeks,datasets:[
+  {label:'Orders',  data:D.weeks.map(function(w){return D.weekly[w].Orders;}),  borderColor:'#0367D9',backgroundColor:'rgba(3,103,217,.07)',fill:true,tension:.35,pointRadius:4},
   {label:'Receipts',data:D.weeks.map(function(w){return D.weekly[w].Receipts;}),borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.07)',fill:true,tension:.35,pointRadius:4},
   {label:'WW ETAs', data:D.weeks.map(function(w){return D.weekly[w]['WW ETAs'];}),borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.07)',fill:true,tension:.35,pointRadius:4}
 ]},options:Object.assign({},BASE,{plugins:Object.assign({},BASE.plugins,{tooltip:{mode:'index',intersect:false}})})});
 new Chart(document.getElementById('newVsCoChart'),{type:'bar',data:{labels:D.display_weeks,datasets:[
-  {label:'New Gaps',    data:D.weeks.map(function(w){return D.new_vs_co[w].new;}),      backgroundColor:'#93c5fd',borderRadius:3},
+  {label:'New Gaps',    data:D.weeks.map(function(w){return D.new_vs_co[w].new;}),      backgroundColor:'rgba(3,103,217,0.5)',borderRadius:3},
   {label:'Carried Over',data:D.weeks.map(function(w){return D.new_vs_co[w].carryover;}),backgroundColor:'#fca5a5',borderRadius:3}
 ]},options:{responsive:true,maintainAspectRatio:false,plugins:Object.assign({},BASE.plugins,{tooltip:{mode:'index',intersect:false}}),scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11}}},y:{stacked:true,grid:{color:'#f1f5f9'},ticks:{font:{size:11}},beginAtZero:true}}}});
 new Chart(document.getElementById('gapAgeChart'),{type:'doughnut',data:{labels:['New (1 week)','Short-term (2-3 wks)','Medium (4-6 wks)','Chronic (7+ wks)'],datasets:[{data:[D.gap_age.new,D.gap_age.short,D.gap_age.medium,D.gap_age.chronic],backgroundColor:['#10b981','#f59e0b','#f97316','#ef4444'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:11},padding:12}},tooltip:{callbacks:{label:function(c){return ' '+c.raw.toLocaleString()+' dockets';}}},title:{display:false}}}});
 
-
-// Exceptions strip below trend chart
-if(D.exceptions&&D.exceptions.length){
-  var strip=document.getElementById('exceptionsStrip');
-  if(strip){
-    var uniqueDates={};
-    D.exceptions.forEach(function(ex){uniqueDates[ex.effective_date]=true;});
-    var html='<strong>&#x26A0;&#xFE0F; Reporting Rules Changes Active</strong> &mdash; Gap counts reflect BI logic changes. ';
-    D.exceptions.forEach(function(ex){
-      var cf=ex.carrier_filter?', '+ex.carrier_filter+' carrier only':'';
-      html+='<span class="exc-tag">'+ex.effective_date+'</span>';
-      html+=ex.org_code+(ex.gap_type?' / '+ex.gap_type:'')+(cf)+': '+ex.reason+'. <em style="color:#94a3b8">Reported '+ex.date_reported+' by '+ex.reported_by+'.</em> &nbsp;';
-    });
-    strip.innerHTML=html;
-    strip.style.display='block';
-  }
-}
 // ---- Overview warehouse filter ----
 var ovSel=document.getElementById('ovWhsFilter');
 D.warehouses.forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;ovSel.appendChild(o);});
@@ -97,7 +57,6 @@ function updateOverview(){
 }
 
 // ---- Warehouses tab ----
-
 var ACTIONS={
   'POD/POP':['Assign one team member per shift to upload PODs in CargoWise within 24 hours of delivery confirmation.','Run a daily 5-minute check: search for closed dockets missing a POD and upload any you have on hand.','If carriers are not providing signed PODs, escalate through your LP account manager -- this is a carrier accountability issue.'],
   'Transport Reference':['Capture the transport reference at booking, not retroactively -- add it as a required field in your booking checklist.','If a shipper sends shipments without transport references, flag them directly and request a process fix on their side.','Set a weekly reminder to audit dockets from the last 2 weeks that still show no transport reference.'],
@@ -120,7 +79,6 @@ function updateWhsTab(){
   var whs=whsSel.value;
   document.getElementById('whsGapTitle').textContent=whs;
   document.getElementById('whsTrendTitle').textContent=whs;
-  // Gap types: merge across all tabs for this warehouse
   var allGaps={};
   var gt=(D.whs_gap_types&&D.whs_gap_types[whs])||{};
   ['Orders','Receipts','WW ETAs'].forEach(function(tab){
@@ -136,29 +94,23 @@ function updateWhsTab(){
   var gColors=glabels.map(function(_,i){return 'hsl('+(211+i*22)+',62%,'+(52+i*.8)+'%)';});
   if(whsGapInst){whsGapInst.data.labels=glabels;whsGapInst.data.datasets[0].data=gvals;whsGapInst.data.datasets[0].backgroundColor=gColors;whsGapInst.update();}
   else{whsGapInst=new Chart(document.getElementById('whsGapChart'),{type:'bar',data:{labels:glabels,datasets:[{label:'All-Time Occurrences',data:gvals,backgroundColor:gColors,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return ' '+c.raw.toLocaleString()+' gaps';}}}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});}
-  // Weekly trend for this warehouse (stacked by tab)
   var ordData=D.weeks.map(function(w2){return(D.whs_weekly_tab&&D.whs_weekly_tab[whs]&&D.whs_weekly_tab[whs][w2]&&D.whs_weekly_tab[whs][w2].Orders)||0;});
   var recData=D.weeks.map(function(w2){return(D.whs_weekly_tab&&D.whs_weekly_tab[whs]&&D.whs_weekly_tab[whs][w2]&&D.whs_weekly_tab[whs][w2].Receipts)||0;});
   var etaData=D.weeks.map(function(w2){return(D.whs_weekly_tab&&D.whs_weekly_tab[whs]&&D.whs_weekly_tab[whs][w2]&&D.whs_weekly_tab[whs][w2]['WW ETAs'])||0;});
   if(whsTrendInst){whsTrendInst.data.datasets[0].data=ordData;whsTrendInst.data.datasets[1].data=recData;whsTrendInst.data.datasets[2].data=etaData;whsTrendInst.update();}
   else{whsTrendInst=new Chart(document.getElementById('whsTrendChart'),{type:'line',data:{labels:D.display_weeks,datasets:[
-    {label:'Orders',  data:ordData,borderColor:'#3b82f6',backgroundColor:'rgba(59,130,246,.1)',fill:true,tension:.35,pointRadius:4},
+    {label:'Orders',  data:ordData,borderColor:'#0367D9',backgroundColor:'rgba(3,103,217,.1)',fill:true,tension:.35,pointRadius:4},
     {label:'Receipts',data:recData,borderColor:'#f59e0b',backgroundColor:'rgba(245,158,11,.1)',fill:true,tension:.35,pointRadius:4},
     {label:'WW ETAs', data:etaData,borderColor:'#10b981',backgroundColor:'rgba(16,185,129,.1)',fill:true,tension:.35,pointRadius:4}
   ]},options:Object.assign({},BASE,{plugins:Object.assign({},BASE.plugins,{tooltip:{mode:'index',intersect:false}})})});}
-
-  // --- Meeting Spotlight ---
   document.getElementById('spotlightTitle').textContent=whs;
-  // Top orgs at this warehouse from existing org_whs data
   var whsOrgs=[];
   D.top_orgs.forEach(function(org){var cnt=(D.org_whs[org]&&D.org_whs[org][whs])||0;if(cnt>0)whsOrgs.push({org:org,count:cnt});});
   whsOrgs.sort(function(a,b){return b.count-a.count;});
   document.getElementById('whsOrgBody').innerHTML=whsOrgs.slice(0,6).map(function(o){return '<tr><td><strong>'+o.org+'</strong></td><td>'+o.count.toLocaleString()+'</td></tr>';}).join('')||'<tr><td colspan="2" style="color:#94a3b8">No data in top 25 orgs</td></tr>';
-  // Gap age donut
   var ageArr=D.whs_age&&D.whs_age[whs]?[D.whs_age[whs].new,D.whs_age[whs].short,D.whs_age[whs].medium,D.whs_age[whs].chronic]:[0,0,0,0];
   if(whsAgeInst){whsAgeInst.data.datasets[0].data=ageArr;whsAgeInst.update();}
   else{whsAgeInst=new Chart(document.getElementById('whsAgeChart'),{type:'doughnut',data:{labels:['New (1 wk)','Short-term (2-3 wks)','Medium (4-6 wks)','Chronic (7+ wks)'],datasets:[{data:ageArr,backgroundColor:['#10b981','#f59e0b','#f97316','#ef4444'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{font:{size:10},padding:8}},tooltip:{callbacks:{label:function(c){return ' '+c.raw+' dockets';}}}}}});}
-  // Action items from top gap types
   var actHtml='';
   sorted.slice(0,4).forEach(function(gc){
     var actions=ACTIONS[gc[0]];
@@ -172,12 +124,54 @@ function updateWhsTab(){
 }
 updateWhsTab();
 
-function gapChart(id,tab){var raw=D.gap_col_tab[tab]||{},sorted=Object.entries(raw).sort(function(a,b){return b[1]-a[1];});var pal={Orders:'rgba(59,130,246,.75)',Receipts:'rgba(245,158,11,.75)','WW ETAs':'rgba(16,185,129,.75)'};new Chart(document.getElementById(id),{type:'bar',data:{labels:sorted.map(function(e){return e[0].replace(' Gap Indicator','').replace(' Indicator','');}),datasets:[{label:'All-Time Occurrences',data:sorted.map(function(e){return e[1];}),backgroundColor:pal[tab],borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{font:{size:11}}},y:{grid:{display:false},ticks:{font:{size:11}}}}}});}
-gapChart('ordersGapChart','Orders');gapChart('receiptsGapChart','Receipts');gapChart('etasGapChart','WW ETAs');
 var bmap={Orders:'b-orders',Receipts:'b-receipts','WW ETAs':'b-etas'};
-var tbody=document.getElementById('recurringBody');
-if(!D.recurring.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:28px">No dockets found in 3+ report weeks.</td></tr>';}
-else{tbody.innerHTML=D.recurring.map(function(r,i){return '<tr><td>'+(i+1)+'</td><td><strong>'+r.docket_id+'</strong></td><td><span class="badge '+bmap[r.tab]+'">'+r.tab+'</span></td><td>'+r.warehouse+'</td><td>'+r.org_code+'</td><td><strong>'+r.weeks_count+'</strong></td><td>'+r.first_seen+'</td><td>'+r.last_seen+'</td><td>'+r.weeks.map(function(w){return '<span class="pill">'+w+'</span>';}).join('')+'</td></tr>';}).join('');}
+
+// ---- Open Issues tab ----
+function renderOpenIssues(){
+  var gtr=D.gap_type_recur||{};
+  var sortedGtr=Object.entries(gtr).sort(function(a,b){return b[1].recur-a[1].recur;});
+  var topStuck=sortedGtr.length?sortedGtr[0]:null;
+  var totalPersistent=D.recurring_total||D.recurring.length;
+  var avgAge=D.recurring.length?Math.round(D.recurring.reduce(function(s,r){return s+r.weeks_count;},0)/D.recurring.length):0;
+  document.getElementById('oi-kpi-row').innerHTML=
+    '<div class="kpi-card blue"><div class="kpi-label">Persistent Dockets</div><div class="kpi-value">'+totalPersistent.toLocaleString()+'</div><div class="kpi-delta delta-neutral">open 3+ consecutive weeks</div></div>'+
+    '<div class="kpi-card amber"><div class="kpi-label">Most Stuck Gap Type</div><div class="kpi-value" style="font-size:20px;line-height:1.2;margin-top:4px">'+(topStuck?topStuck[0]:'&mdash;')+'</div><div class="kpi-delta delta-neutral">'+(topStuck?topStuck[1].recur.toLocaleString()+' recurring dockets':'')+'</div></div>'+
+    '<div class="kpi-card" style="border-top-color:#ef4444"><div class="kpi-label">Avg Age of Stuck Dockets</div><div class="kpi-value" style="color:#ef4444">'+avgAge+' wks</div><div class="kpi-delta delta-neutral">chronic threshold: 7+ weeks</div></div>';
+  var byTotal=Object.entries(gtr).sort(function(a,b){return b[1].total-a[1].total;}).slice(0,12).reverse();
+  var clabels=byTotal.map(function(e){return e[0];});
+  var ctotals=byTotal.map(function(e){return e[1].total;});
+  var crecur=byTotal.map(function(e){return e[1].recur;});
+  new Chart(document.getElementById('persistenceChart'),{type:'bar',data:{labels:clabels,datasets:[
+    {label:'Total occurrences',data:ctotals,backgroundColor:'rgba(180,180,180,0.45)',borderRadius:3,grouped:false,barPercentage:0.8,categoryPercentage:0.9},
+    {label:'Recurring dockets (3+ wks)',data:crecur,backgroundColor:'rgba(3,103,217,0.82)',borderRadius:3,grouped:false,barPercentage:0.5,categoryPercentage:0.9}
+  ]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{labels:{font:{size:11},padding:14}},tooltip:{mode:'index',intersect:false}},scales:{x:{grid:{color:'#f1f5f9'},ticks:{font:{size:11}},beginAtZero:true},y:{grid:{display:false},ticks:{font:{size:11}}}}}});
+  var gapSel=document.getElementById('oiGapFilter');
+  var whsSel2=document.getElementById('oiWhsFilter');
+  if(gapSel.options.length===1){Object.keys(gtr).sort().forEach(function(k){var o=document.createElement('option');o.value=o.textContent=k;gapSel.appendChild(o);});}
+  if(whsSel2.options.length===1){D.warehouses.forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;whsSel2.appendChild(o);});}
+  filterOpenIssues();
+}
+function filterOpenIssues(){
+  var gf=document.getElementById('oiGapFilter').value;
+  var wf=document.getElementById('oiWhsFilter').value;
+  var filtered=D.recurring.filter(function(r){
+    var mG=!gf||(r.gap_types&&r.gap_types.indexOf(gf)>=0);
+    var mW=!wf||r.warehouse===wf;
+    return mG&&mW;
+  });
+  document.getElementById('oi-count').textContent='('+filtered.length+' dockets)';
+  var tbody2=document.getElementById('oiBody');
+  if(!filtered.length){tbody2.innerHTML='<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:28px">No matching dockets.</td></tr>';return;}
+  tbody2.innerHTML=filtered.slice(0,100).map(function(r,i){
+    var wks=r.weeks_count;
+    var age=wks===1?'new':wks<=3?'short':wks<=6?'medium':'chronic';
+    var ageLbl={new:'New',short:'Short-term',medium:'Medium',chronic:'Chronic'}[age];
+    var ageBg={new:'#d1fae5',short:'#fef3c7',medium:'#ffedd5',chronic:'#fee2e2'}[age];
+    var ageFg={new:'#065f46',short:'#92400e',medium:'#9a3412',chronic:'#991b1b'}[age];
+    var gapPills=(r.gap_types||[]).map(function(g){return '<span class="pill">'+g+'</span>';}).join('');
+    return '<tr><td>'+(i+1)+'</td><td><strong>'+r.docket_id+'</strong></td><td><span class="badge '+bmap[r.tab]+'">'+r.tab+'</span></td><td>'+r.warehouse+'</td><td>'+r.org_code+'</td><td>'+gapPills+'</td><td><strong>'+wks+'</strong></td><td><span class="badge" style="background:'+ageBg+';color:'+ageFg+'">'+ageLbl+'</span></td></tr>';
+  }).join('');
+}
 var activeWhs=D.warehouses.filter(function(w){return D.top_orgs.some(function(o){return((D.org_whs[o]&&D.org_whs[o][w])||0)>0;});});
 var globalMax=Math.max.apply(null,D.top_orgs.map(function(o){return D.org_total[o];}));
 var tbl='<table><thead><tr><th>Org / Client Code</th><th style="text-align:center">Total</th>'+activeWhs.map(function(w){return '<th style="text-align:center">'+w+'</th>';}).join('')+'</tr></thead><tbody>';
@@ -231,7 +225,7 @@ function renderObservations(){
   html+='<div class="obs-body">A targeted conversation with these warehouse managers would have outsized impact.</div>';
   html+='<table class="obs-table"><thead><tr><th>Warehouse</th><th>Gap Events</th><th>% of Total</th></tr></thead><tbody>';
   var maxW=O.top_warehouses[0].count;
-  for(var i=0;i<O.top_warehouses.length;i++){var w=O.top_warehouses[i];var bw=Math.round(w.count/maxW*100);html+='<tr><td><strong>'+w.whs+'</strong></td><td>'+w.count.toLocaleString()+'</td><td>'+w.pct+'%<div class="obs-bar"><div class="obs-bar-fill" style="width:'+bw+'%;background:#3b82f6"></div></div></td></tr>';}
+  for(var i=0;i<O.top_warehouses.length;i++){var w=O.top_warehouses[i];var bw=Math.round(w.count/maxW*100);html+='<tr><td><strong>'+w.whs+'</strong></td><td>'+w.count.toLocaleString()+'</td><td>'+w.pct+'%<div class="obs-bar"><div class="obs-bar-fill" style="width:'+bw+'%;background:#0367D9"></div></div></td></tr>';}
   html+='</tbody></table></div>';
   html+='<div class="obs-card obs-red">';
   html+='<div class="obs-title">&#x1F6AB; '+O.stubborn_count+' Dockets Never Corrected</div>';
@@ -252,6 +246,60 @@ function renderObservations(){
     html+='</tbody></table></div>';
   }
   html+='<div class="obs-bl"><strong>&#x1F4CC; Bottom Line: </strong>'+O.bottom_line+'</div>';
+
+  // ---- Warehouse-Client Repeat Offenders ----
+  var woi=D.whs_org_insights||[];
+  var mwc=D.multi_whs_clients||[];
+  if(woi.length){
+    html+='<div style="margin-top:28px">';
+    html+='<div style="font-size:15px;font-weight:700;color:#0367D9;margin-bottom:4px;padding-bottom:6px;border-bottom:2px solid #e2e8f0">&#x1F501; Warehouse-Client Repeat Offenders</div>';
+    html+='<div style="font-size:13px;color:#475569;margin:12px 0 16px">These warehouse-client combinations have dockets that reappear every week without resolution. When the same gap type shows on 75%+ of dockets, it typically means the client workflow does not produce that field &mdash; a BI rule amendment may be appropriate rather than asking the warehouse to fix it.</div>';
+    html+='<div style="overflow-x:auto"><table><thead><tr>';
+    html+='<th>Warehouse</th><th>Client (Org)</th><th style="text-align:center">Stuck Dockets</th><th style="text-align:center">Chronic (7+ wks)</th><th style="text-align:center">Max Age</th><th>Dominant Gap Types</th><th>Signal</th>';
+    html+='</tr></thead><tbody>';
+    for(var i=0;i<woi.length;i++){
+      var item=woi[i];
+      var tg=item.gap_types.length?item.gap_types[0]:null;
+      var isBI=tg&&tg.pct>=75;
+      var sig=isBI?'<span class="badge" style="background:#dbeafe;color:#1d4ed8">BI Rule</span>':'<span class="badge" style="background:#fef3c7;color:#92400e">Operational</span>';
+      var pills='';
+      for(var j=0;j<Math.min(3,item.gap_types.length);j++){
+        var gt=item.gap_types[j];
+        var gbg=gt.pct>=90?'#fee2e2':gt.pct>=60?'#fef3c7':'#f1f5f9';
+        var gfg=gt.pct>=90?'#991b1b':gt.pct>=60?'#92400e':'#475569';
+        pills+='<span style="display:inline-block;background:'+gbg+';color:'+gfg+';border-radius:4px;padding:2px 7px;font-size:11px;margin:1px 2px;white-space:nowrap">'+gt.name+' ('+gt.pct+'%)</span>';
+      }
+      html+='<tr><td><strong>'+item.warehouse+'</strong></td><td><strong>'+item.org_code+'</strong></td>';
+      html+='<td style="text-align:center">'+item.count+'</td>';
+      html+='<td style="text-align:center"><strong style="color:#ef4444">'+item.chronic+'</strong></td>';
+      html+='<td style="text-align:center">'+item.max_weeks+' wks</td>';
+      html+='<td>'+pills+'</td><td>'+sig+'</td></tr>';
+    }
+    html+='</tbody></table></div>';
+    if(mwc.length){
+      html+='<div class="obs-bl" style="margin-top:16px"><strong>&#x1F517; Same client, multiple warehouses &mdash; network-wide BI rule candidates:</strong><br><br>';
+      for(var i=0;i<mwc.length;i++){
+        var mc=mwc[i];
+        html+='<span class="pill" style="font-size:12px">'+mc.org_code+'</span> ';
+        html+='<span style="font-size:12px;color:#475569">'+mc.warehouses.join(', ')+' &mdash; '+mc.total_recurring+' recurring dockets';
+        if(mc.top_gap)html+=', primarily <strong>'+mc.top_gap+'</strong>';
+        html+='</span><br>';
+      }
+      html+='</div>';
+    }
+    html+='<div style="margin-top:16px;padding:16px 20px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">';
+    html+='<div style="font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Questions to Ask the Warehouse</div>';
+    var qs=['Has this client gap field ever been populated, or has it always been blank? If always blank, the field likely does not exist in their workflow.',
+      'Is the client entering data outside CargoWise (e.g. a TMS or spreadsheet)? If so, is there a mapping or automation we can set up?',
+      'For POD/POP gaps: does this client use a carrier or delivery model where a signed POD is not standard practice (e.g. air express, self-delivery)?',
+      'For Volume/INCO gaps: was this agreed at the contract or quote stage? If the client never provided it, the issue may be upstream at onboarding.',
+      'Has anyone directly contacted the client about this specific field? What was their response?'];
+    for(var i=0;i<qs.length;i++){
+      html+='<div style="font-size:13px;color:#475569;padding:5px 0 5px 14px;border-left:3px solid #0367D9;margin-bottom:8px">'+qs[i]+'</div>';
+    }
+    html+='</div></div>';
+  }
+
   document.getElementById('obs-content').innerHTML=html;
 }
 renderObservations();

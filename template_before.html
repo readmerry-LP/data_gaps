@@ -4,23 +4,25 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Data Gaps Trend Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans+Narrow:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
-.header{background:linear-gradient(135deg,#1e3a8a 0%,#1d4ed8 100%);color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between}
+body{font-family:Arial,'Arial Narrow',Calibri,sans-serif;background:#f1f5f9;color:#1e293b;font-size:14px}
+h1,h2,h3,.nav-btn,.kpi-label,.kpi-value{font-family:'PT Sans Narrow','Arial Narrow',Arial,sans-serif}
+.header{background:#0367D9;color:#fff;padding:18px 28px;display:flex;align-items:center;justify-content:space-between}
 .header h1{font-size:20px;font-weight:700}
 .meta{font-size:11px;opacity:.75;margin-top:4px}
 .header-right{text-align:right;font-size:11px;opacity:.8;line-height:1.6}
 nav{background:#fff;border-bottom:1px solid #e2e8f0;padding:0 28px;display:flex;overflow-x:auto}
 .nav-btn{padding:14px 18px;border:none;background:none;cursor:pointer;font-size:13px;font-weight:600;color:#64748b;border-bottom:3px solid transparent;white-space:nowrap;transition:color .15s,border-color .15s}
-.nav-btn:hover{color:#334155}.nav-btn.active{color:#1d4ed8;border-bottom-color:#1d4ed8}
+.nav-btn:hover{color:#334155}.nav-btn.active{color:#0367D9;border-bottom-color:#0367D9}
 .content{padding:24px 28px;max-width:1440px;margin:0 auto}
 .tab-panel{display:none}.tab-panel.active{display:block}
 .tab-header{margin-bottom:22px}.tab-header h2{font-size:17px;font-weight:700;margin-bottom:4px}.tab-header p{font-size:13px;color:#64748b}
 .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:22px}
 .kpi-card{background:#fff;border-radius:10px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-top:3px solid #e2e8f0}
-.kpi-card.blue{border-top-color:#3b82f6}.kpi-card.amber{border-top-color:#f59e0b}.kpi-card.green{border-top-color:#10b981}.kpi-card.purple{border-top-color:#8b5cf6}
+.kpi-card.blue{border-top-color:#0367D9}.kpi-card.amber{border-top-color:#f59e0b}.kpi-card.green{border-top-color:#10b981}.kpi-card.purple{border-top-color:#8b5cf6}
 .kpi-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
 .kpi-value{font-size:34px;font-weight:800;color:#0f172a;line-height:1}
 .kpi-delta{font-size:12px;margin-top:7px;font-weight:600}
@@ -42,13 +44,10 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
 .heatmap-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 .heatmap-wrap table th:first-child,.heatmap-wrap table td:first-child{position:sticky;left:0;background:#fff;z-index:1;min-width:160px}
 .heatmap-wrap table th:nth-child(2),.heatmap-wrap table td:nth-child(2){position:sticky;left:160px;background:#fff;z-index:1;border-right:1px solid #e2e8f0}
-/* Overview filter bar */
 .ov-filter{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
 .filter-label{font-size:11px;font-weight:700;color:#94a3b8;text-transform:uppercase;letter-spacing:.06em}
 .filter-note{font-size:11px;color:#94a3b8;font-style:italic}
-/* Warehouse tab universal filter */
 .whs-filter-bar{background:#fff;border-radius:10px;padding:14px 22px;margin-bottom:20px;box-shadow:0 1px 4px rgba(0,0,0,.07);display:flex;align-items:center;justify-content:center;gap:14px}
-/* Observations */
 .obs-kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:16px}
 .obs-kpi{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 1px 4px rgba(0,0,0,.07);text-align:center}
 .obs-kpi-val{font-size:36px;font-weight:800;line-height:1;margin-bottom:6px}
@@ -56,7 +55,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
 .obs-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
 .obs-card{background:#fff;border-radius:10px;padding:20px 22px;box-shadow:0 1px 4px rgba(0,0,0,.07);border-left:4px solid #e2e8f0}
 .obs-card.obs-red{border-left-color:#ef4444}.obs-card.obs-amber{border-left-color:#f59e0b}
-.obs-card.obs-green{border-left-color:#10b981}.obs-card.obs-blue{border-left-color:#3b82f6}
+.obs-card.obs-green{border-left-color:#10b981}.obs-card.obs-blue{border-left-color:#0367D9}
 .obs-title{font-size:15px;font-weight:700;color:#0f172a;margin-bottom:10px}
 .obs-stat{font-size:32px;font-weight:800;color:#0f172a;line-height:1.1;margin-bottom:10px}
 .obs-body{font-size:13px;color:#475569;line-height:1.6}
@@ -65,17 +64,17 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
 .obs-table td{padding:6px 8px;border-bottom:1px solid #f8fafc}
 .obs-bar{height:6px;background:#e2e8f0;border-radius:3px;margin-top:4px}
 .obs-bar-fill{height:100%;border-radius:3px}
-.obs-bl{background:#f0f9ff;border:1px solid #bae6fd;border-radius:10px;padding:20px 24px;font-size:14px;color:#0c4a6e;line-height:1.8;margin-top:4px}
+.obs-bl{background:#e8f1fc;border:1px solid #a3c4f5;border-radius:10px;padding:20px 24px;font-size:14px;color:#024fa8;line-height:1.8;margin-top:4px}
 @media(max-width:900px){.kpi-grid{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}.obs-kpi-row{grid-template-columns:1fr 1fr}.obs-row{grid-template-columns:1fr}}
 .section-lbl{font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;margin-top:16px}
-.action-item{background:#f8fafc;border-left:3px solid #3b82f6;border-radius:0 7px 7px 0;padding:10px 14px;margin-bottom:8px;font-size:13px;color:#334155;line-height:1.6}
+.action-item{background:#f8fafc;border-left:3px solid #0367D9;border-radius:0 7px 7px 0;padding:10px 14px;margin-bottom:8px;font-size:13px;color:#334155;line-height:1.6}
 .action-item .a-head{font-weight:700;color:#0f172a;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px}
 .spotlight-grid{display:grid;grid-template-columns:340px 1fr;gap:24px}
 @media(max-width:900px){.spotlight-grid{grid-template-columns:1fr}}
 .guide-section{margin-bottom:28px}
-.guide-section h3{font-size:15px;font-weight:700;color:#1d4ed8;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0}
+.guide-section h3{font-size:15px;font-weight:700;color:#0367D9;margin-bottom:12px;padding-bottom:6px;border-bottom:2px solid #e2e8f0}
 .guide-kpi-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:16px}
-.guide-kpi{background:#fff;border-radius:8px;padding:14px 16px;border-left:4px solid #3b82f6;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.guide-kpi{background:#fff;border-radius:8px;padding:14px 16px;border-left:4px solid #0367D9;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .guide-kpi .gk-name{font-size:12px;font-weight:700;color:#0f172a;margin-bottom:5px}
 .guide-kpi .gk-body{font-size:12px;color:#475569;line-height:1.6}
 .guide-kpi .gk-good{font-size:11px;color:#10b981;font-weight:600;margin-top:5px}
@@ -83,8 +82,8 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
 .guide-chart{background:#fff;border-radius:8px;padding:14px 16px;margin-bottom:12px;border-left:4px solid #8b5cf6;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .guide-chart .gc-name{font-size:12px;font-weight:700;color:#0f172a;margin-bottom:5px}
 .guide-chart .gc-body{font-size:12px;color:#475569;line-height:1.6}
-.guide-intro{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:18px 22px;margin-bottom:24px;font-size:13px;color:#1e40af;line-height:1.8}
-.guide-intro strong{color:#1e3a8a}
+.guide-intro{background:#e8f1fc;border:1px solid #a3c4f5;border-radius:10px;padding:18px 22px;margin-bottom:24px;font-size:13px;color:#024fa8;line-height:1.8}
+.guide-intro strong{color:#0367D9}
 .exc-strip{margin-top:12px;padding:10px 14px;background:#fafafa;border:1px solid #e2e8f0;border-radius:7px;font-size:12px;color:#475569;line-height:1.6}
 .exc-strip strong{color:#0f172a}
 .exc-tag{display:inline-block;background:#fef3c7;color:#92400e;border-radius:4px;padding:1px 7px;font-size:11px;font-weight:700;margin-right:6px}
@@ -99,8 +98,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
   <button class="nav-btn" onclick="switchTab('guide',this)">&#x1F4D6; Guide</button>
   <button class="nav-btn active" onclick="switchTab('overview',this)">&#x1F3E0; Overview</button>
   <button class="nav-btn" onclick="switchTab('warehouses',this)">&#x1F3ED; Warehouses</button>
-  <button class="nav-btn" onclick="switchTab('gaptypes',this)">&#x1F4CB; Gap Types</button>
-  <button class="nav-btn" onclick="switchTab('recurrence',this)">&#x1F501; Recurrence</button>
+  <button class="nav-btn" onclick="switchTab('openissues',this)">&#x26A0;&#xFE0F; Open Issues</button>
   <button class="nav-btn" onclick="switchTab('orgcodes',this)">&#x1F525; Org Codes</button>
   <button class="nav-btn" onclick="switchTab('observations',this)">&#x1F4A1; Observations</button>
 </nav>
@@ -108,9 +106,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
 
 <div id="tab-guide" class="tab-panel">
   <div class="tab-header"><h2>&#x1F4D6; Presenter Cheat Sheet</h2><p>Covering <span id="guide-date-range">...</span> &mdash; <span id="guide-weeks">...</span> report weeks through <span id="guide-latest">...</span></p></div>
-
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px">
-
     <div class="card">
       <h3>&#x1F3E0; Overview</h3>
       <div class="card-note" style="margin-bottom:14px">Set the stage. Show the big picture before diving into specifics.</div>
@@ -118,63 +114,49 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Total Gap Events</td><td style="padding:7px 0;color:#475569">Raw count of missing or incorrect fields this week. One shipment can have several.</td></tr>
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Unique Dockets</td><td style="padding:7px 0;color:#475569">How many individual shipments have at least one open item &mdash; a cleaner measure of scope.</td></tr>
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Warehouses Affected</td><td style="padding:7px 0;color:#475569">How spread out the issue is across the network this week.</td></tr>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#ef4444;border-top:1px solid #f1f5f9">Carried-Over Rate</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>&ldquo;This tells us how many open items were also open last week. Let&rsquo;s talk about what&rsquo;s getting in the way of clearing them.&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#ef4444;border-top:1px solid #f1f5f9">Carried-Over Rate</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>This tells us how many open items were also open last week.</em></td></tr>
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Weekly Trend</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Show direction of travel. Even a small downward trend is worth calling out as a win.</td></tr>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">New vs. Carried-Over</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Red = still open from before, blue = new this week. <em>&ldquo;Our goal is to grow the blue and shrink the red.&rdquo;</em></td></tr>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Gap Age Breakdown</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>&ldquo;The Chronic slice is where I most want to help &mdash; these have been open 7+ weeks and I want to understand what&rsquo;s blocking them.&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">New vs. Carried-Over</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Red = still open from before, blue = new this week.</td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Gap Age Breakdown</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>The Chronic slice is where I most want to help.</em></td></tr>
       </tbody></table>
     </div>
-
     <div class="card">
       <h3>&#x1F3ED; Warehouses</h3>
       <div class="card-note" style="margin-bottom:14px">Filter to their warehouse. Walk through each section together.</div>
       <table style="font-size:13px"><tbody>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Gap Types chart</td><td style="padding:7px 0;color:#475569"><em>&ldquo;This is your specific breakdown &mdash; what&rsquo;s flagging most often for you. Let&rsquo;s talk about the top one or two.&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Gap Types chart</td><td style="padding:7px 0;color:#475569"><em>This is your specific breakdown &mdash; what is flagging most often for you.</em></td></tr>
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Weekly Trend</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Point out any downward movement as a win. If flat, frame it as an opportunity.</td></tr>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Gap Age donut</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>&ldquo;The Chronic slice is what I want to prioritize with you &mdash; these are the ones we can likely close with one conversation.&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Gap Age donut</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>The Chronic slice is what I want to prioritize with you.</em></td></tr>
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Top Org Codes</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Helps separate a warehouse process issue from a client data issue.</td></tr>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Action Items</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Use as conversation starters. <em>&ldquo;Does this match what you&rsquo;re seeing? What would make this easier?&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Action Items</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Use as conversation starters.</td></tr>
       </tbody></table>
     </div>
-
     <div class="card">
-      <h3>&#x1F4CB; Gap Types</h3>
-      <div class="card-note" style="margin-bottom:14px">Network-wide view. Normalizes the problem &mdash; most warehouses share the same top issues.</div>
+      <h3>&#x26A0;&#xFE0F; Open Issues</h3>
+      <div class="card-note" style="margin-bottom:14px">Cross-reference frequency with persistence. Focus where the blue bar is long relative to gray.</div>
       <table style="font-size:13px"><tbody>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Orders / Receipts / WW ETAs</td><td style="padding:7px 0;color:#475569">Each bar = one data field, ranked by frequency. <em>&ldquo;Missing POD is the #1 across the whole network &mdash; so you&rsquo;re not alone in this.&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Persistence chart</td><td style="padding:7px 0;color:#475569"><em>Missing POD has the most stuck dockets &mdash; that is where I want to focus with you.</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Filter + docket list</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">Filter to their warehouse + top gap type. Hand them the list &mdash; makes it concrete.</td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#ef4444;border-top:1px solid #f1f5f9">Chronic dockets</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9"><em>These have been open 7+ weeks. Is there something we can help unblock?</em></td></tr>
       </tbody></table>
     </div>
-
-    <div class="card">
-      <h3>&#x1F501; Recurrence</h3>
-      <div class="card-note" style="margin-bottom:14px">For conversations about specific long-open dockets. Lead with curiosity, not blame.</div>
-      <table style="font-size:13px"><tbody>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Persistent Dockets</td><td style="padding:7px 0;color:#475569"><em>&ldquo;These have been open 3+ weeks. I want to understand what&rsquo;s keeping them open &mdash; is there something we can unblock on our end?&rdquo;</em></td></tr>
-      </tbody></table>
-    </div>
-
     <div class="card">
       <h3>&#x1F525; Org Codes</h3>
       <div class="card-note" style="margin-bottom:14px">Use to show whether a gap problem is local or comes from a specific client.</div>
       <table style="font-size:13px"><tbody>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Heat map</td><td style="padding:7px 0;color:#475569">Dark across one row = client issue. Dark in one cell = local process. <em>&ldquo;This helps us point the conversation in the right direction.&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a">Heat map</td><td style="padding:7px 0;color:#475569">Dark across one row = client issue. Dark in one cell = local process.</td></tr>
       </tbody></table>
     </div>
-
     <div class="card">
       <h3>&#x1F4A1; Observations</h3>
       <div class="card-note" style="margin-bottom:14px">Auto-written each week. Good for briefing a manager before a meeting.</div>
       <table style="font-size:13px"><tbody>
-        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#10b981">Success Stories</td><td style="padding:7px 0;color:#475569">Always lead with this. <em>&ldquo;MNJ dropped 94% &mdash; whatever you did, it worked. What changed?&rdquo;</em></td></tr>
+        <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#10b981">Success Stories</td><td style="padding:7px 0;color:#475569">Always lead with this.</td></tr>
         <tr><td style="padding:7px 10px 7px 0;font-weight:700;white-space:nowrap;vertical-align:top;color:#0f172a;border-top:1px solid #f1f5f9">Bottom Line</td><td style="padding:7px 0;color:#475569;border-top:1px solid #f1f5f9">One-paragraph summary. Copy into Teams or email as a weekly manager briefing.</td></tr>
       </tbody></table>
     </div>
-
   </div>
 </div>
-
-
-
 
 <div id="tab-overview" class="tab-panel active">
   <div class="tab-header"><h2>Weekly Overview</h2><p>High-level gap trends across all warehouses and report types.</p></div>
@@ -188,7 +170,6 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
     <h3>Weekly Gap Count &mdash; <span id="trendTitle">All Warehouses</span></h3>
     <div class="card-note">Orders (blue) &bull; Receipts (amber) &bull; WW ETAs (green)</div>
     <div class="chart-box" style="height:300px"><canvas id="trendChart"></canvas></div>
-    <div id="exceptionsStrip" style="display:none" class="exc-strip"></div>
   </div>
   <div class="two-col">
     <div class="card">
@@ -239,24 +220,28 @@ tr:last-child td{border-bottom:none}tr:hover td{background:#fafbfd}
       </div>
     </div>
   </div>
-
 </div>
 
-<div id="tab-gaptypes" class="tab-panel">
-  <div class="tab-header"><h2>Gap Type Analysis</h2><p>Which specific data fields are most frequently missing or incorrect?</p></div>
-  <div class="card"><h3><span class="badge b-orders">Orders</span> &mdash; Gap Column Frequency</h3><div class="chart-box" style="height:280px"><canvas id="ordersGapChart"></canvas></div></div>
-  <div class="card"><h3><span class="badge b-receipts">Receipts</span> &mdash; Gap Column Frequency</h3><div class="chart-box" style="height:280px"><canvas id="receiptsGapChart"></canvas></div></div>
-  <div class="card"><h3><span class="badge b-etas">WW ETAs</span> &mdash; ETA Indicator</h3><div class="chart-box" style="height:120px"><canvas id="etasGapChart"></canvas></div></div>
-</div>
-
-<div id="tab-recurrence" class="tab-panel">
-  <div class="tab-header"><h2>Recurrence &amp; Persistence</h2><p>Track which gaps are being resolved and which persist week after week.</p></div>
+<div id="tab-openissues" class="tab-panel">
+  <div class="tab-header"><h2>Open Issues</h2><p>Which gap types generate the most persistent dockets? Cross-reference frequency with recurrence to find where to focus.</p></div>
+  <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr)" id="oi-kpi-row"></div>
   <div class="card">
-    <h3>Most Persistent Dockets (3+ report weeks)</h3>
-    <div class="card-note">Same Docket ID with unresolved data quality issues across multiple report cycles.</div>
+    <h3>Gap Type Persistence</h3>
+    <div class="card-note">Gray = total all-time occurrences &bull; Blue = recurring dockets (open 3+ weeks). A long blue bar means the issue is not being resolved.</div>
+    <div class="chart-box" style="height:400px"><canvas id="persistenceChart"></canvas></div>
+  </div>
+  <div class="ov-filter" style="margin-bottom:16px">
+    <span class="filter-label">Gap Type</span>
+    <select id="oiGapFilter" onchange="filterOpenIssues()"><option value="">All Gap Types</option></select>
+    <span class="filter-label" style="margin-left:12px">Warehouse</span>
+    <select id="oiWhsFilter" onchange="filterOpenIssues()"><option value="">All Warehouses</option></select>
+  </div>
+  <div class="card">
+    <h3>Persistent Dockets &mdash; <span id="oi-count" style="font-weight:400;color:#64748b;font-size:13px"></span></h3>
+    <div class="card-note">Dockets open 3 or more consecutive weeks. Use the filters above to focus on a specific gap type or warehouse.</div>
     <div style="overflow-x:auto">
-    <table><thead><tr><th>#</th><th>Docket ID</th><th>Tab</th><th>Warehouse</th><th>Org Code</th><th>Weeks</th><th>First Seen</th><th>Last Seen</th><th>Report Dates</th></tr></thead>
-    <tbody id="recurringBody"></tbody></table>
+    <table><thead><tr><th>#</th><th>Docket ID</th><th>Tab</th><th>Warehouse</th><th>Org Code</th><th>Gap Types</th><th>Weeks Open</th><th>Age</th></tr></thead>
+    <tbody id="oiBody"></tbody></table>
     </div>
   </div>
 </div>

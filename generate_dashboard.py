@@ -11,7 +11,7 @@ else:
 
 MIN_DATE    = '2026-05-01'
 SCRIPT_DIR  = os.path.dirname(os.path.abspath(__file__))
-OUTPUT_FILE = os.path.join(SCRIPT_DIR, 'DataGaps_Dashboard.html')
+OUTPUT_FILE = os.path.join(SCRIPT_DIR, 'index.html')
 TABS        = ['Orders', 'Receipts', 'WW ETAs']
 CHARTJS_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'
 
@@ -39,16 +39,13 @@ def parse_week(fname):
 def display_date(iso):
     return datetime.strptime(iso, '%Y-%m-%d').strftime('%m/%d/%y')
 
-# ---- Load reporting exceptions (rules changes from BI team) ------------------
 EXCEPTIONS_FILE = os.path.join(SCRIPT_DIR, 'exceptions_log.csv')
 exceptions = []
 if os.path.exists(EXCEPTIONS_FILE):
     with open(EXCEPTIONS_FILE, newline='', encoding='utf-8') as ef:
         for ex in csvmod.DictReader(ef):
-            if ex.get('Action','').strip().lower() == 'suppress':
-                exceptions.append(ex)
-    print("Loaded " + str(len(exceptions)) + " suppression rule(s) from exceptions_log.csv")
-
+            exceptions.append(ex)
+    print("Loaded " + str(len(exceptions)) + " exception(s) from exceptions_log.csv")
 
 files = sorted([f for f in os.listdir(ARCHIVE_FOLDER)
                 if f.endswith('.xlsx') and 'MASTER' in f.upper()])
@@ -96,7 +93,6 @@ for fname in files:
     wb.close()
 
 print("Total gap events: " + str(len(records)))
-
 
 all_weeks = sorted(set(r['week'] for r in records))
 all_whs   = sorted(set(r['warehouse'] for r in records if r['warehouse']))
@@ -149,6 +145,81 @@ for tab in TABS:
                     last_seen=display_date(sw[-1]), weeks=[display_date(x) for x in sw]))
 recurring.sort(key=lambda x: -x['weeks_count'])
 
+docket_gap_cols = defaultdict(set)
+for r in records:
+    clean = r['gap_col'].replace(' Gap Indicator','').replace(' Indicator','')
+    docket_gap_cols[(r['tab'], r['docket_id'])].add(clean)
+
+for entry in recurring:
+    entry['gap_types'] = sorted(docket_gap_cols.get((entry['tab'], entry['docket_id']), set()))
+
+recurring_total = len(recurring)
+
+gap_type_recur = defaultdict(lambda: {'total': 0, 'recur': 0})
+for tab in TABS:
+    for col, count in gap_col_tab[tab].items():
+        clean = col.replace(' Gap Indicator','').replace(' Indicator','')
+        gap_type_recur[clean]['total'] += count
+for tab in TABS:
+    for docket_id, weeks_set in docket_week_map[tab].items():
+        if len(weeks_set) >= 3:
+            for gt in docket_gap_cols.get((tab, docket_id), set()):
+                gap_type_recur[gt]['recur'] += 1
+
+# --- Warehouse-client recurring analysis ---
+_woi_map = {}
+for r in recurring:
+    key = (r['warehouse'], r['org_code'])
+    if key not in _woi_map:
+        _woi_map[key] = {'warehouse': r['warehouse'], 'org_code': r['org_code'],
+                         'count': 0, 'chronic': 0, 'max_weeks': 0, 'gap_cnts': defaultdict(int)}
+    e = _woi_map[key]
+    e['count'] += 1
+    if r['weeks_count'] >= 7: e['chronic'] += 1
+    if r['weeks_count'] > e['max_weeks']: e['max_weeks'] = r['weeks_count']
+    for g in r.get('gap_types', []): e['gap_cnts'][g] += 1
+
+_woi_ranked = sorted(_woi_map.values(), key=lambda x: (-x['chronic'], -x['count']))
+_whs_org_insights = []
+for item in _woi_ranked[:15]:
+    n = item['count']
+    sg = sorted(item['gap_cnts'].items(), key=lambda x: -x[1])
+    _whs_org_insights.append({
+        'warehouse': item['warehouse'],
+        'org_code':  item['org_code'],
+        'count':     n,
+        'chronic':   item['chronic'],
+        'max_weeks': item['max_weeks'],
+        'gap_types': [{'name': g, 'count': c, 'pct': round(c/n*100)} for g, c in sg[:5]]
+    })
+
+_org_recur_whs = {}
+for r in recurring:
+    org = r['org_code']
+    if org not in _org_recur_whs: _org_recur_whs[org] = {}
+    whs = r['warehouse']
+    if whs not in _org_recur_whs[org]:
+        _org_recur_whs[org][whs] = {'count': 0, 'gap_cnts': defaultdict(int)}
+    _org_recur_whs[org][whs]['count'] += 1
+    for g in r.get('gap_types', []): _org_recur_whs[org][whs]['gap_cnts'][g] += 1
+
+_multi_whs_clients = []
+for org, wd in _org_recur_whs.items():
+    if len(wd) >= 2:
+        tot = sum(v['count'] for v in wd.values())
+        ag = defaultdict(int)
+        for v in wd.values():
+            for g, c in v['gap_cnts'].items(): ag[g] += c
+        tg = max(ag.items(), key=lambda x: x[1])[0] if ag else ''
+        _multi_whs_clients.append({
+            'org_code':        org,
+            'warehouses':      sorted(wd.keys()),
+            'total_recurring': tot,
+            'top_gap':         tg
+        })
+_multi_whs_clients.sort(key=lambda x: -x['total_recurring'])
+
+
 org_whs   = defaultdict(lambda: defaultdict(int))
 org_total = defaultdict(int)
 for r in records:
@@ -168,8 +239,6 @@ for i, w in enumerate(all_weeks):
     rate = round(resolved / len(prev_d) * 100, 1) if prev_d else 0
     resolution[w] = {'resolved': resolved, 'rate': rate}
 
-
-# ---- Per-warehouse gap type + tab breakdown (for Warehouses tab charts) ------
 whs_gap_types_d  = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 whs_weekly_tab_d = defaultdict(lambda: defaultdict(lambda: defaultdict(int)))
 whs_weekly_doc_d = defaultdict(lambda: defaultdict(set))
@@ -179,7 +248,6 @@ for r in records:
         whs_weekly_tab_d[r['warehouse']][r['week']][r['tab']] += 1
         whs_weekly_doc_d[r['warehouse']][r['week']].add((r['tab'], r['docket_id']))
 
-# ---- Observations (auto-generated analyst insights) -------------------------
 obs = {}
 lw  = all_weeks[-1]
 total_all = len(records)
@@ -190,22 +258,21 @@ obs['latest_week']     = display_date(lw)
 obs['carryover_rate']  = round(nvc_lw['carryover'] / co_total * 100) if co_total else 0
 obs['carryover_count'] = nvc_lw['carryover']
 obs['new_count']       = nvc_lw['new']
-
-obs['first_week']        = display_date(all_weeks[0])
-obs['first_total']       = weekly[all_weeks[0]]['total']
-obs['last_total']        = weekly[lw]['total']
+obs['first_week']      = display_date(all_weeks[0])
+obs['first_total']     = weekly[all_weeks[0]]['total']
+obs['last_total']      = weekly[lw]['total']
 obs['volume_pct_change'] = round((obs['last_total'] - obs['first_total']) / obs['first_total'] * 100) if obs['first_total'] else 0
 if len(all_weeks) >= 4:
     last4 = [weekly[w]['total'] for w in all_weeks[-4:]]
     mean4 = sum(last4) / 4
-    obs['plateau']       = (max(last4) - min(last4)) / mean4 < 0.10 if mean4 else False
-    obs['last4_totals']  = last4
-    obs['last4_weeks']   = [display_date(w) for w in all_weeks[-4:]]
+    obs['plateau']      = (max(last4) - min(last4)) / mean4 < 0.10 if mean4 else False
+    obs['last4_totals'] = last4
+    obs['last4_weeks']  = [display_date(w) for w in all_weeks[-4:]]
 else:
     obs['plateau'] = False; obs['last4_totals'] = []; obs['last4_weeks'] = []
 
 org_sorted = sorted(org_total.items(), key=lambda x: -x[1])
-obs['top_clients'] = [{'org': o, 'count': c, 'pct': round(c / total_all * 100)} for o, c in org_sorted[:3]]
+obs['top_clients']     = [{'org': o, 'count': c, 'pct': round(c / total_all * 100)} for o, c in org_sorted[:3]]
 obs['top2_client_pct'] = round(sum(c for _, c in org_sorted[:2]) / total_all * 100) if total_all else 0
 
 gap_col_counts = defaultdict(int)
@@ -271,8 +338,6 @@ obs['bottom_line'] = (
     + (('The improvement at ' + imp_str + ' proves the system works when warehouses engage.') if imp_str else '')
 )
 
-
-# ---- Gap age breakdown (how long has each latest-week docket been open) ------
 lw_docket_whs2 = {}
 for r in records:
     if r['week'] == lw:
@@ -303,35 +368,89 @@ for tab in TABS:
         if w2 in whs_gap_age:
             whs_gap_age[w2][b] += 1
 
-# ---- Package for HTML --------------------------------------------------------
+_gtr_sorted     = sorted(gap_type_recur.items(), key=lambda x: -x[1]['total'])
+_gap_type_recur = dict()
+for k, v in _gtr_sorted:
+    _gap_type_recur[k] = {'total': v['total'], 'recur': v['recur']}
+
+_whs_weekly = dict()
+for whs in whs_ranked:
+    _whs_weekly[whs] = dict()
+    for w in all_weeks:
+        _whs_weekly[whs][w] = whs_weekly[whs].get(w, 0)
+
+_gap_col_tab = dict()
+for tab in TABS:
+    _gap_col_tab[tab] = dict(gap_col_tab[tab])
+
+_org_whs   = dict()
+_org_total = dict()
+for o in top_orgs:
+    _org_whs[o]   = dict(org_whs[o])
+    _org_total[o] = org_total[o]
+
+_whs_gap_types = dict()
+for whs in whs_ranked:
+    _whs_gap_types[whs] = dict()
+    for tab in TABS:
+        _whs_gap_types[whs][tab] = dict(whs_gap_types_d[whs].get(tab, {}))
+
+_whs_doc_count = dict()
+for whs in whs_ranked:
+    _whs_doc_count[whs] = dict()
+    for w in all_weeks:
+        _whs_doc_count[whs][w] = len(whs_weekly_doc_d[whs].get(w, set()))
+
+_whs_weekly_tab = dict()
+for whs in whs_ranked:
+    _whs_weekly_tab[whs] = dict()
+    for w in all_weeks:
+        _whs_weekly_tab[whs][w] = dict()
+        for tab in TABS:
+            _whs_weekly_tab[whs][w][tab] = whs_weekly_tab_d[whs].get(w, {}).get(tab, 0)
+
+_exceptions_list = []
+for ex in exceptions:
+    row = dict()
+    row['date_reported']  = ex.get('Date Reported', '')
+    row['effective_date'] = ex.get('Effective Date', '')
+    row['warehouse']      = ex.get('Warehouse', '')
+    row['org_code']       = ex.get('Org Code', '')
+    row['gap_type']       = ex.get('Gap Type', '')
+    row['carrier_filter'] = ex.get('Carrier Filter', '')
+    row['reason']         = ex.get('Reason', '')
+    row['reported_by']    = ex.get('Reported By', '')
+    row['notes']          = ex.get('Notes', '')
+    _exceptions_list.append(row)
+
 data = dict(
-    generated    = datetime.now().strftime('%Y-%m-%d %H:%M'),
-    file_count   = sum(1 for f in files if (parse_week(f) or '') >= MIN_DATE),
-    total_events = len(records),
-    weeks        = all_weeks,
-    display_weeks= [display_date(w) for w in all_weeks],
-    warehouses   = whs_ranked,
-    weekly       = weekly,
-    whs_total    = dict(whs_total),
-    whs_weekly   = {whs: {w: whs_weekly[whs].get(w,0) for w in all_weeks} for whs in whs_ranked},
-    gap_col_tab  = {tab: dict(gap_col_tab[tab]) for tab in TABS},
-    new_vs_co    = new_vs_co,
-    recurring    = recurring[:50],
-    top_orgs     = top_orgs,
-    org_whs      = {o: dict(org_whs[o]) for o in top_orgs},
-    org_total    = {o: org_total[o] for o in top_orgs},
-    resolution   = resolution,
-    gap_age       = gap_age_breakdown,
-    whs_age       = whs_gap_age,
-    whs_gap_types = {whs: {tab: dict(whs_gap_types_d[whs].get(tab,{})) for tab in TABS} for whs in whs_ranked},
-    whs_weekly_tab= {whs: {w: {tab: whs_weekly_tab_d[whs].get(w,{}).get(tab,0) for tab in TABS} for w in all_weeks} for whs in whs_ranked},
-    whs_doc_count = {whs: {w: len(whs_weekly_doc_d[whs].get(w,set())) for w in all_weeks} for whs in whs_ranked},
-    observations = obs,
-    exceptions    = [{'date_reported': ex.get('Date Reported',''), 'effective_date': ex.get('Effective Date',''),
-                      'warehouse': ex.get('Warehouse',''), 'org_code': ex.get('Org Code',''),
-                      'gap_type': ex.get('Gap Type',''), 'carrier_filter': ex.get('Carrier Filter',''),
-                      'reason': ex.get('Reason',''), 'reported_by': ex.get('Reported By',''),
-                      'notes': ex.get('Notes','')} for ex in exceptions],
+    generated      = datetime.now().strftime('%Y-%m-%d %H:%M'),
+    file_count     = sum(1 for f in files if (parse_week(f) or '') >= MIN_DATE),
+    total_events   = len(records),
+    weeks          = all_weeks,
+    display_weeks  = [display_date(w) for w in all_weeks],
+    warehouses     = whs_ranked,
+    weekly         = weekly,
+    whs_total      = dict(whs_total),
+    whs_weekly     = _whs_weekly,
+    gap_col_tab    = _gap_col_tab,
+    new_vs_co      = new_vs_co,
+    recurring      = recurring[:150],
+    recurring_total     = recurring_total,
+    whs_org_insights  = _whs_org_insights,
+    multi_whs_clients = _multi_whs_clients,
+    gap_type_recur = _gap_type_recur,
+    top_orgs       = top_orgs,
+    org_whs        = _org_whs,
+    org_total      = _org_total,
+    resolution     = resolution,
+    gap_age        = gap_age_breakdown,
+    whs_age        = whs_gap_age,
+    whs_gap_types  = _whs_gap_types,
+    whs_weekly_tab = _whs_weekly_tab,
+    whs_doc_count  = _whs_doc_count,
+    observations   = obs,
+    exceptions     = _exceptions_list,
 )
 
 chartjs_tag = fetch_chartjs()
