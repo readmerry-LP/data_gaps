@@ -1,3 +1,0 @@
-Date Reported,Effective Date,Warehouse,Org Code,Gap Type,Carrier Filter,Action,Reason,Reported By,Notes
-2026-06-11,2026-06-15,VEW,CISDENSEA,Missing POD,,BI Rule Change,Cisco does not ship on their own account and therefore cannot provide PODs — BI script updated to exclude this flag,VEW Warehouse Team,Gap counts for CISDENSEA Missing POD will appear lower from 06/15 onward. This is expected and correct.
-2026-06-11,2026-06-15,VEW,WORKWINWK,Missing POD,DHL,BI Rule Change,DHL orders for Workwize cannot be flagged for Missing POD — BI script updated to exclude this flag for DHL carrier,VEW Warehouse Team,Gap counts for WORKWINWK Missing POD (DHL) will appear lower from 06/15 onward. This is expected and correct.
