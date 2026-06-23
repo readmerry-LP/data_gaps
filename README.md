@@ -113,8 +113,8 @@ When the BI team updates their flagging logic (e.g., suppressing a gap type for 
 | Tab | What It Shows |
 |---|---|
 | **Guide** | Presenter cheat sheet — talking points for each KPI and how to use them in warehouse meetings |
-| **Overview** | Weekly KPIs, trend chart, new vs. carried-over, gap age breakdown. Global date range filter at top narrows KPIs, trend, and carryover chart. |
-| **Warehouses** | Per-warehouse gap type chart, weekly trend (date-range aware), top 3 gap types for the filtered period, and meeting spotlight with action items |
+| **Overview** | Weekly KPIs, trend chart, new vs. carried-over (warehouse + date-range aware), and gap age breakdown (warehouse-aware). Global date range filter narrows KPIs, trend, and carryover chart. |
+| **Warehouses** | Per-warehouse gap type chart (date-range filtered, not cumulative), weekly trend (date-range aware), top 3 gap types for the filtered period, and meeting spotlight with action items |
 | **Open Issues** | Gap type stickiness chart, gap type × warehouse heatmap, and per-warehouse gap profiles with age breakdown and trend direction |
 | **Org Codes** | Top 25 client org codes × warehouses heatmap (green = low, red = high) |
 | **Observations** | Auto-generated analyst summary including warehouse-client repeat offender analysis and BI rule candidate flags |
@@ -126,11 +126,12 @@ When the BI team updates their flagging logic (e.g., suppressing a gap type for 
 A global **From / To** date range selector sits at the top of every tab. Selecting a range updates:
 - Overview KPI cards
 - Weekly trend chart (all warehouses and per-warehouse)
-- New vs. carried-over chart
+- New vs. carried-over chart (also warehouse-aware — selecting a warehouse shows that warehouse's new/carryover data for the filtered range)
 - Warehouse weekly trend chart
-- Top 3 gap types in the Warehouse tab
+- Gap type bar chart in the Warehouses tab
+- Top 3 gap types in the Warehouses tab
 
-Charts based on all-time aggregates (gap type totals, org heatmap, age donut) are unaffected — they show the full reporting period regardless of the filter.
+Charts based on all-time aggregates (org heatmap) are unaffected. The gap age donut in Overview reflects the selected warehouse filter but not the date range, as it represents a cumulative breakdown.
 
 ---
 
