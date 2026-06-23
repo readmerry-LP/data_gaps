@@ -10,15 +10,15 @@ Built and maintained by the Logistics Plus Data Integrity team.
 
 Each Monday, the BI team generates a Master `.xlsx` report listing every shipment with missing or incorrect data fields across three report types: **Orders**, **Receipts**, and **WW ETAs**. This dashboard reads all archived Master reports and produces a self-contained HTML file with:
 
-- Week-over-week gap volume trends (by report type)
+- Week-over-week gap volume trends (by report type), filterable by date range
 - New vs. carried-over docket tracking and carryover rate
-- Open gap age breakdown (new → chronic)
-- Per-warehouse gap type breakdown and weekly trend
+- Per-warehouse gap type breakdown, weekly trend, and top 3 gap types for the selected date range
 - Meeting Spotlight for one-on-one warehouse ops meetings (with auto-generated action items)
-- Recurring docket tracker (dockets open 3+ consecutive weeks)
-- Org code heat map (top 25 clients × warehouses)
-- Auto-generated analyst Observations summary
-- BI rules changelog with trend chart annotation
+- Gap type stickiness chart (% of occurrences that never get resolved)
+- Gap type × warehouse heatmap (recurring dockets by gap type and location)
+- Warehouse gap profiles with age breakdown and trend direction
+- Org code heatmap (top 25 clients × warehouses, green → red intensity)
+- Auto-generated analyst Observations summary with warehouse-client repeat offender analysis
 
 ---
 
@@ -29,8 +29,8 @@ Each Monday, the BI team generates a Master `.xlsx` report listing every shipmen
 | `generate_dashboard.py` | Main script — reads all Master reports, computes all metrics, writes the dashboard HTML |
 | `template_before.html` | HTML head, styles, nav, and tab panel structure |
 | `template_after.html` | All JavaScript — chart rendering, filters, interactivity |
-| `exceptions_log.csv` | Changelog of BI reporting logic changes (see below) |
-| `DataGaps_Dashboard.html` | **Generated output** — open this in a browser to view the dashboard |
+| `exceptions_log.csv` | Changelog of BI reporting logic changes (suppression rules) |
+| `index.html` | **Generated output** — open this in a browser to view the dashboard |
 
 ---
 
@@ -47,7 +47,7 @@ Install dependency:
 pip install openpyxl
 ```
 
-No other dependencies. Chart.js is fetched from CDN at generation time and embedded inline, so the output HTML is fully self-contained (works in OneDrive browser preview and offline).
+No other dependencies. Chart.js is fetched from CDN at generation time and embedded inline when possible, so the output HTML works in OneDrive browser preview and offline.
 
 ---
 
@@ -77,7 +77,7 @@ MIN_DATE = '2026-05-01'
 python generate_dashboard.py
 ```
 
-3. Open or share `DataGaps_Dashboard.html`.
+3. Open or share `index.html`.
 
 The script reads every `*MASTER*.xlsx` file in the archive folder dated on or after `MIN_DATE`, computes all metrics, and regenerates the dashboard. It takes about 30–60 seconds depending on archive size.
 
@@ -85,7 +85,7 @@ The script reads every `*MASTER*.xlsx` file in the archive folder dated on or af
 
 ## Reporting Rules Changes (`exceptions_log.csv`)
 
-When the BI team updates their flagging logic (e.g., suppressing a gap type for a specific client or carrier), add a row to `exceptions_log.csv`. The dashboard will automatically annotate the trend chart with a dashed vertical line at the effective date and display a plain-language note explaining what changed and why.
+When the BI team updates their flagging logic (e.g., suppressing a gap type for a specific client or carrier), add a row to `exceptions_log.csv`. The dashboard will automatically apply the suppression when computing gap counts.
 
 **Columns:**
 
@@ -106,21 +106,31 @@ When the BI team updates their flagging logic (e.g., suppressing a gap type for 
 - `CISDENSEA` — Cisco doesn't ship on its own account, so `Missing POD` should never fire for them.
 - `WORKWINWK` — `Missing POD` should not fire for DHL orders specifically.
 
-The BI team updated their script. Those rows in `exceptions_log.csv` explain why the 6/15 gap count is lower than 6/8 — it's partially a rules correction, not purely warehouse improvement.
-
 ---
 
 ## Dashboard Tabs
 
 | Tab | What It Shows |
 |---|---|
-| **Guide** | Presenter cheat sheet — brief talking points for each KPI and how to use them in warehouse meetings |
-| **Overview** | Weekly KPIs, trend chart (filterable by warehouse), new vs. carried-over, gap age breakdown |
-| **Warehouses** | Per-warehouse gap type chart, weekly trend, and meeting spotlight with action items |
-| **Gap Types** | Network-wide gap column frequency by report type |
-| **Recurrence** | All dockets open 3+ consecutive weeks |
-| **Org Codes** | Client × warehouse heat map (top 25 org codes) |
-| **Observations** | Auto-generated analyst summary — regenerated every run |
+| **Guide** | Presenter cheat sheet — talking points for each KPI and how to use them in warehouse meetings |
+| **Overview** | Weekly KPIs, trend chart, new vs. carried-over, gap age breakdown. Global date range filter at top narrows KPIs, trend, and carryover chart. |
+| **Warehouses** | Per-warehouse gap type chart, weekly trend (date-range aware), top 3 gap types for the filtered period, and meeting spotlight with action items |
+| **Open Issues** | Gap type stickiness chart, gap type × warehouse heatmap, and per-warehouse gap profiles with age breakdown and trend direction |
+| **Org Codes** | Top 25 client org codes × warehouses heatmap (green = low, red = high) |
+| **Observations** | Auto-generated analyst summary including warehouse-client repeat offender analysis and BI rule candidate flags |
+
+---
+
+## Date Range Filter
+
+A global **From / To** date range selector sits at the top of every tab. Selecting a range updates:
+- Overview KPI cards
+- Weekly trend chart (all warehouses and per-warehouse)
+- New vs. carried-over chart
+- Warehouse weekly trend chart
+- Top 3 gap types in the Warehouse tab
+
+Charts based on all-time aggregates (gap type totals, org heatmap, age donut) are unaffected — they show the full reporting period regardless of the filter.
 
 ---
 
@@ -132,6 +142,6 @@ Master report column structures have changed over time. The script joins on **co
 
 ## Notes
 
-- The `DataGaps_Dashboard.html` output file can be committed to the repo or shared directly via OneDrive — it has no external dependencies once generated.
+- The `index.html` output file can be committed to the repo or shared directly via OneDrive — it has no external dependencies once generated.
 - The `exceptions_log.csv` should be committed alongside the templates so the changelog is version-controlled.
 - To add a new year's archive, update `ARCHIVE_FOLDER` and `MIN_DATE` in `generate_dashboard.py`.
