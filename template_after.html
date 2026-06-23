@@ -26,7 +26,7 @@ var gapAgeInst=new Chart(document.getElementById('gapAgeChart'),{type:'doughnut'
 
 // ---- Overview warehouse filter ----
 var ovSel=document.getElementById('ovWhsFilter');
-D.warehouses.forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;ovSel.appendChild(o);});
+D.warehouses.slice().sort().forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;ovSel.appendChild(o);});
 // ---- Date range filter init ----
 var _fStart=document.getElementById('filterStart'),_fEnd=document.getElementById('filterEnd');
 D.weeks.forEach(function(w,i){
@@ -132,7 +132,7 @@ var ACTIONS={
   'Service Level':['Service level is agreed at booking and should be locked in at that point -- if blank, check that your booking form requires it.']
 };
 var whsSel=document.getElementById('whsSelect');
-D.warehouses.forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;whsSel.appendChild(o);});
+D.warehouses.slice().sort().forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;whsSel.appendChild(o);});
 var whsTrendInst=null,whsGapInst=null;
 function renderWhsGapChart(whs){
   var totals={};
@@ -196,7 +196,7 @@ function updateWhsTab(){
   document.getElementById('whsOrgBody').innerHTML=whsOrgs.slice(0,6).map(function(o){return '<tr><td><strong>'+o.org+'</strong></td><td>'+o.count.toLocaleString()+'</td></tr>';}).join('')||'<tr><td colspan="2" style="color:#94a3b8">No data in top 25 orgs</td></tr>';
   renderWhsTopGaps(whs);
   var actHtml='';
-  sorted.slice(0,4).forEach(function(gc){
+  var _actTotals={};var _gtw2=D.whs_gap_type_weekly&&D.whs_gap_type_weekly[whs]?D.whs_gap_type_weekly[whs]:{};filteredWeeks.forEach(function(w){var wk=_gtw2[w]||{};Object.keys(wk).forEach(function(g){_actTotals[g]=(_actTotals[g]||0)+wk[g];});});var sorted=Object.entries(_actTotals).sort(function(a,b){return b[1]-a[1];});  sorted.slice(0,4).forEach(function(gc){
     var actions=ACTIONS[gc[0]];
     if(!actions)return;
     actHtml+='<div class="action-item"><div class="a-head">'+gc[0]+' &mdash; '+gc[1].toLocaleString()+' occurrences</div>';
@@ -264,7 +264,7 @@ function renderOpenIssues(){
 
   // ---- Warehouse selector ----
   var whsSel=document.getElementById('oiWhsSelect');
-  if(whsSel.options.length===0){D.warehouses.forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;whsSel.appendChild(o);});}
+  if(whsSel.options.length===0){D.warehouses.slice().sort().forEach(function(w){var o=document.createElement('option');o.value=o.textContent=w;whsSel.appendChild(o);});}
   renderWhsProfile();
 }
 function renderWhsProfile(){
@@ -368,14 +368,7 @@ function renderObservations(){
   var maxW=O.top_warehouses[0].count;
   for(var i=0;i<O.top_warehouses.length;i++){var w=O.top_warehouses[i];var bw=Math.round(w.count/maxW*100);html+='<tr><td><strong>'+w.whs+'</strong></td><td>'+w.count.toLocaleString()+'</td><td>'+w.pct+'%<div class="obs-bar"><div class="obs-bar-fill" style="width:'+bw+'%;background:#0367D9"></div></div></td></tr>';}
   html+='</tbody></table></div>';
-  html+='<div class="obs-card obs-red">';
-  html+='<div class="obs-title">&#x1F6AB; '+O.stubborn_count+' Dockets Never Corrected</div>';
-  html+='<div class="obs-body">These dockets appeared in <strong>'+O.max_weeks+'</strong> consecutive report weeks without correction. They require direct follow-up.</div>';
-  html+='<table class="obs-table"><thead><tr><th>Docket</th><th>Tab</th><th>Warehouse</th><th>Org</th><th>Wks</th></tr></thead><tbody>';
-  var showMax=Math.min(8,O.stubborn_dockets.length);
-  for(var i=0;i<showMax;i++){var d=O.stubborn_dockets[i];html+='<tr><td><strong>'+d.docket_id+'</strong></td><td>'+d.tab+'</td><td>'+d.warehouse+'</td><td>'+d.org_code+'</td><td><strong>'+d.weeks+'</strong></td></tr>';}
-  if(O.stubborn_count>showMax)html+='<tr><td colspan="5" style="color:#94a3b8;text-align:center">...and '+(O.stubborn_count-showMax)+' more</td></tr>';
-  html+='</tbody></table></div>';
+
   html+='</div>';
   if(O.best_improvers&&O.best_improvers.length){
     html+='<div class="obs-card obs-green" style="margin-bottom:16px">';
